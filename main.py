@@ -125,17 +125,80 @@ with tab2:
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("**🎯 Tính năng chính:**")
-            for feature in idea.get('key_features', []):
-                st.markdown(f"- {feature}")
+            st.markdown(f"**👥 Đối tượng người dùng:** {idea.get('target_users', 'N/A')}")
         
         with col2:
-            st.markdown(f"**👥 Đối tượng người dùng:** {idea.get('target_users', 'N/A')}")
             st.markdown(f"**💎 Giá trị cốt lõi:** {idea.get('value_proposition', 'N/A')}")
         
-        st.markdown("**🛠️ Công nghệ đề xuất:**")
-        for tech in idea.get('tech_stack_suggestions', []):
-            st.markdown(f"- {tech}")
+        st.divider()
+        
+        st.markdown("### 🎯 Tính năng chính")
+        st.markdown("*Bạn có thể thêm, sửa hoặc xóa các tính năng*")
+        
+        if 'key_features' not in idea:
+            idea['key_features'] = []
+        
+        features = idea.get('key_features', [])
+        
+        for idx, feature in enumerate(features):
+            col_feature, col_delete = st.columns([5, 1])
+            with col_feature:
+                new_value = st.text_input(
+                    f"Tính năng {idx + 1}",
+                    value=feature,
+                    key=f"feature_{idx}",
+                    label_visibility="collapsed"
+                )
+                if new_value != feature:
+                    st.session_state.idea['key_features'][idx] = new_value
+            
+            with col_delete:
+                if st.button("🗑️", key=f"delete_feature_{idx}", help="Xóa tính năng này"):
+                    st.session_state.idea['key_features'].pop(idx)
+                    st.rerun()
+        
+        new_feature = st.text_input("➕ Thêm tính năng mới", key="new_feature", placeholder="Nhập tính năng mới...")
+        if st.button("Thêm tính năng", key="add_feature_btn"):
+            if new_feature and new_feature.strip():
+                if 'key_features' not in st.session_state.idea:
+                    st.session_state.idea['key_features'] = []
+                st.session_state.idea['key_features'].append(new_feature.strip())
+                st.rerun()
+        
+        st.divider()
+        
+        st.markdown("### 🛠️ Công nghệ đề xuất")
+        st.markdown("*Bạn có thể thêm, sửa hoặc xóa các công nghệ*")
+        
+        if 'tech_stack_suggestions' not in idea:
+            idea['tech_stack_suggestions'] = []
+        
+        tech_stack = idea.get('tech_stack_suggestions', [])
+        
+        for idx, tech in enumerate(tech_stack):
+            col_tech, col_delete = st.columns([5, 1])
+            with col_tech:
+                new_value = st.text_input(
+                    f"Công nghệ {idx + 1}",
+                    value=tech,
+                    key=f"tech_{idx}",
+                    label_visibility="collapsed"
+                )
+                if new_value != tech:
+                    st.session_state.idea['tech_stack_suggestions'][idx] = new_value
+            
+            with col_delete:
+                if st.button("🗑️", key=f"delete_tech_{idx}", help="Xóa công nghệ này"):
+                    st.session_state.idea['tech_stack_suggestions'].pop(idx)
+                    st.rerun()
+        
+        new_tech = st.text_input("➕ Thêm công nghệ mới", key="new_tech", placeholder="Nhập công nghệ mới...")
+        if st.button("Thêm công nghệ", key="add_tech_btn"):
+            if new_tech and new_tech.strip():
+                if 'tech_stack_suggestions' not in st.session_state.idea:
+                    st.session_state.idea['tech_stack_suggestions'] = []
+                st.session_state.idea['tech_stack_suggestions'].append(new_tech.strip())
+                st.rerun()
         
         st.divider()
         

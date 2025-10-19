@@ -63,7 +63,10 @@ Giúp developers tự động hóa quy trình làm việc với sự hỗ trợ 
 
 ### 3. Quy trình làm việc
 1. **Tab "Mô tả dự án"**: Nhập mô tả dự án → Click "Tạo ý tưởng"
-2. **Tab "Ý tưởng"**: Xem ý tưởng chi tiết → Click "Tạo kế hoạch"
+2. **Tab "Ý tưởng"**: 
+   - Xem ý tưởng chi tiết do AI tạo
+   - **Quản lý Tags**: Thêm, sửa, xóa các tính năng và công nghệ
+   - Tùy chỉnh ý tưởng theo ý muốn → Click "Tạo kế hoạch"
 3. **Tab "Kế hoạch"**: Xem kế hoạch chi tiết → Click "Bắt đầu thực thi"
 4. **Tab "Thực thi"**: Theo dõi quá trình AI thực hiện từng task
 5. **Tab "Báo cáo"**: Xem và tải báo cáo tổng kết
@@ -74,11 +77,19 @@ Giúp developers tự động hóa quy trình làm việc với sự hỗ trợ 
 - **AI/LLM**: OpenAI API, Anthropic API
 - **Dependencies**: streamlit, openai, anthropic, python-dotenv
 
+## ✨ Tính năng nổi bật
+- **Multi-LLM Support**: Hỗ trợ nhiều LLM providers (OpenAI, Anthropic)
+- **Editable Tags**: Quản lý tính năng và công nghệ (thêm, sửa, xóa)
+- **Real-time Progress**: Theo dõi tiến độ từng task
+- **Error Handling**: Xử lý lỗi toàn diện với thông báo tiếng Việt
+- **Export Reports**: Tải báo cáo dưới dạng TXT hoặc JSON
+
 ## 📝 Ghi chú
 - Hệ thống hỗ trợ nhiều LLM providers để tăng tính linh hoạt
 - Có thể tùy chỉnh model cho từng loại agent
+- Tùy chỉnh ý tưởng với tính năng quản lý tags
 - Kết quả có thể export dưới dạng TXT hoặc JSON
 
-## 🔄 Phiên bản hiện tại
-- v1.0.0 - Initial release
-- Date: October 19, 2025
+## 🔄 Phiên bản
+- v1.1.0 - Thêm tính năng quản lý tags (October 19, 2025)
+- v1.0.0 - Initial release (October 19, 2025)
