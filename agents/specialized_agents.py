@@ -15,7 +15,7 @@ class SpecializedAgent:
             "documentation": "Bạn là technical writer. Nhiệm vụ của bạn là viết tài liệu kỹ thuật rõ ràng và dễ hiểu."
         }
     
-    def execute_task(self, task: Dict, context: Dict = None) -> Dict:
+    def execute_task(self, task: Dict, context: Dict | None = None) -> Dict:
         system_prompt = self.system_prompts.get(self.agent_type, "Bạn là AI assistant chuyên nghiệp.")
         
         context_str = ""

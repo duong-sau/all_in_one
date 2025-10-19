@@ -101,12 +101,17 @@ with tab1:
     with col1:
         generate_idea_btn = st.button("🚀 Tạo ý tưởng", type="primary", disabled=not st.session_state.llm_client)
     
-    if generate_idea_btn and project_description:
-        with st.spinner("🤔 AI đang phân tích và tạo ý tưởng..."):
-            master_agent = MasterAgent(st.session_state.llm_client, st.session_state.master_model)
-            st.session_state.idea = master_agent.generate_idea(project_description)
-            st.success("✅ Đã tạo ý tưởng!")
-            st.rerun()
+    if generate_idea_btn and project_description and st.session_state.llm_client:
+        try:
+            with st.spinner("🤔 AI đang phân tích và tạo ý tưởng..."):
+                master_agent = MasterAgent(st.session_state.llm_client, st.session_state.master_model)
+                st.session_state.idea = master_agent.generate_idea(project_description)
+                st.success("✅ Đã tạo ý tưởng!")
+                st.rerun()
+        except ValueError as e:
+            st.error(f"❌ {str(e)}")
+        except Exception as e:
+            st.error(f"❌ Lỗi không mong đợi: {str(e)}")
 
 with tab2:
     st.header("💡 Ý tưởng dự án")
@@ -138,12 +143,17 @@ with tab2:
         with col1:
             create_plan_btn = st.button("📋 Tạo kế hoạch", type="primary")
         
-        if create_plan_btn:
-            with st.spinner("📋 AI đang tạo kế hoạch chi tiết..."):
-                master_agent = MasterAgent(st.session_state.llm_client, st.session_state.master_model)
-                st.session_state.plan = master_agent.create_project_plan(st.session_state.idea)
-                st.success("✅ Đã tạo kế hoạch!")
-                st.rerun()
+        if create_plan_btn and st.session_state.llm_client:
+            try:
+                with st.spinner("📋 AI đang tạo kế hoạch chi tiết..."):
+                    master_agent = MasterAgent(st.session_state.llm_client, st.session_state.master_model)
+                    st.session_state.plan = master_agent.create_project_plan(st.session_state.idea)
+                    st.success("✅ Đã tạo kế hoạch!")
+                    st.rerun()
+            except ValueError as e:
+                st.error(f"❌ {str(e)}")
+            except Exception as e:
+                st.error(f"❌ Lỗi không mong đợi: {str(e)}")
     else:
         st.info("ℹ️ Vui lòng tạo ý tưởng ở tab 'Mô tả dự án' trước.")
 
@@ -190,39 +200,45 @@ with tab4:
     st.header("⚙️ Thực thi kế hoạch")
     
     if hasattr(st.session_state, 'execute_triggered') and st.session_state.execute_triggered:
-        if not st.session_state.results:
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            def update_progress(message, progress):
-                status_text.markdown(f"**{message}**")
-                progress_bar.progress(min(progress, 1.0))
-            
-            orchestrator = TaskOrchestrator(st.session_state.llm_client, st.session_state.worker_model)
-            
-            context = {
-                "idea": st.session_state.idea,
-                "plan": st.session_state.plan
-            }
-            
-            st.session_state.results = orchestrator.execute_plan(
-                st.session_state.plan, 
-                context,
-                update_progress
-            )
-            
-            status_text.markdown("**✅ Hoàn thành tất cả tasks!**")
-            progress_bar.progress(1.0)
-            
-            with st.spinner("📄 Đang tạo báo cáo tổng kết..."):
-                st.session_state.report = orchestrator.generate_final_report(
-                    st.session_state.idea,
-                    st.session_state.plan,
-                    st.session_state.results
+        if not st.session_state.results and st.session_state.llm_client and st.session_state.plan:
+            try:
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                def update_progress(message, progress):
+                    status_text.markdown(f"**{message}**")
+                    progress_bar.progress(min(progress, 1.0))
+                
+                orchestrator = TaskOrchestrator(st.session_state.llm_client, st.session_state.worker_model)
+                
+                context = {
+                    "idea": st.session_state.idea,
+                    "plan": st.session_state.plan
+                }
+                
+                st.session_state.results = orchestrator.execute_plan(
+                    st.session_state.plan, 
+                    context,
+                    update_progress
                 )
-            
-            st.success("✅ Đã hoàn thành toàn bộ quy trình!")
-            st.balloons()
+                
+                status_text.markdown("**✅ Hoàn thành tất cả tasks!**")
+                progress_bar.progress(1.0)
+                
+                if st.session_state.idea and st.session_state.plan and st.session_state.results:
+                    with st.spinner("📄 Đang tạo báo cáo tổng kết..."):
+                        st.session_state.report = orchestrator.generate_final_report(
+                            st.session_state.idea,
+                            st.session_state.plan,
+                            st.session_state.results
+                        )
+                
+                st.success("✅ Đã hoàn thành toàn bộ quy trình!")
+                st.balloons()
+            except ValueError as e:
+                st.error(f"❌ {str(e)}")
+            except Exception as e:
+                st.error(f"❌ Lỗi khi thực thi: {str(e)}")
     
     if st.session_state.results:
         st.subheader("📊 Kết quả thực thi")

@@ -18,42 +18,65 @@ class TaskOrchestrator:
         }
         self.task_results = {}
     
-    def execute_plan(self, plan: Dict, context: Dict, progress_callback: Callable = None) -> List[Dict]:
+    def execute_plan(self, plan: Dict, context: Dict, progress_callback: Callable | None = None) -> List[Dict]:
+        if not plan or not isinstance(plan, dict):
+            raise ValueError("Kế hoạch không hợp lệ hoặc rỗng")
+        
+        phases = plan.get("phases", [])
+        if not phases or not isinstance(phases, list):
+            raise ValueError("Kế hoạch không chứa phases hợp lệ. Vui lòng tạo lại kế hoạch.")
+        
         all_results = []
-        total_tasks = sum(len(phase.get("tasks", [])) for phase in plan.get("phases", []))
+        total_tasks = sum(len(phase.get("tasks", [])) for phase in phases)
+        
+        if total_tasks == 0:
+            raise ValueError("Kế hoạch không chứa tasks nào. Vui lòng tạo lại kế hoạch với các tasks cụ thể.")
+        
         completed_tasks = 0
         
-        for phase in plan.get("phases", []):
+        for phase in phases:
             phase_name = phase.get("name", "Unknown Phase")
+            tasks = phase.get("tasks", [])
+            
+            if not tasks:
+                continue
             
             if progress_callback:
-                progress_callback(f"🔄 Bắt đầu phase: {phase_name}", completed_tasks / total_tasks if total_tasks > 0 else 0)
+                progress_callback(f"🔄 Bắt đầu phase: {phase_name}", completed_tasks / total_tasks)
             
-            for task in phase.get("tasks", []):
+            for task in tasks:
                 task_id = task.get("task_id", "unknown")
+                task_name = task.get("name", "Unknown Task")
                 assigned_agent = task.get("assigned_agent", "research")
                 
                 if progress_callback:
-                    progress_callback(f"⚙️ Đang thực hiện: {task.get('name', 'Unknown Task')} (Agent: {assigned_agent})", 
-                                    completed_tasks / total_tasks if total_tasks > 0 else 0)
+                    progress_callback(f"⚙️ Đang thực hiện: {task_name} (Agent: {assigned_agent})", 
+                                    completed_tasks / total_tasks)
                 
-                agent = self.agents.get(assigned_agent)
-                if agent:
-                    result = agent.execute_task(task, context)
-                    self.task_results[task_id] = result
-                    all_results.append(result)
-                else:
+                try:
+                    agent = self.agents.get(assigned_agent)
+                    if agent:
+                        result = agent.execute_task(task, context)
+                        self.task_results[task_id] = result
+                        all_results.append(result)
+                    else:
+                        all_results.append({
+                            "task_id": task_id,
+                            "agent_type": assigned_agent,
+                            "status": "failed",
+                            "result": f"Agent {assigned_agent} không tồn tại"
+                        })
+                except Exception as e:
                     all_results.append({
                         "task_id": task_id,
                         "agent_type": assigned_agent,
                         "status": "failed",
-                        "result": f"Agent {assigned_agent} không tồn tại"
+                        "result": f"Lỗi khi thực hiện task: {str(e)}"
                     })
                 
                 completed_tasks += 1
                 if progress_callback:
-                    progress_callback(f"✅ Hoàn thành: {task.get('name', 'Unknown Task')}", 
-                                    completed_tasks / total_tasks if total_tasks > 0 else 0)
+                    progress_callback(f"✅ Hoàn thành: {task_name}", completed_tasks / total_tasks)
         
         return all_results
     
