@@ -77,6 +77,10 @@ with st.sidebar:
         st.session_state.plan = None
         st.session_state.results = None
         st.session_state.report = None
+        if 'task_states' in st.session_state:
+            st.session_state.task_states = {}
+        if 'orchestrator' in st.session_state:
+            st.session_state.orchestrator = None
         st.rerun()
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -211,6 +215,10 @@ with tab2:
                 with st.spinner("📋 AI đang tạo kế hoạch chi tiết..."):
                     master_agent = MasterAgent(st.session_state.llm_client, st.session_state.master_model)
                     st.session_state.plan = master_agent.create_project_plan(st.session_state.idea)
+                    if 'task_states' in st.session_state:
+                        st.session_state.task_states = {}
+                    if 'orchestrator' in st.session_state:
+                        st.session_state.orchestrator = None
                     st.success("✅ Đã tạo kế hoạch!")
                     st.rerun()
             except ValueError as e:
@@ -383,15 +391,16 @@ with tab4:
             st.success("🎉 Đã hoàn thành tất cả tasks!")
             
             if st.button("📄 Tạo báo cáo tổng kết", type="primary"):
-                with st.spinner("📄 Đang tạo báo cáo..."):
-                    results = [state['result'] for state in st.session_state.task_states.values() if state['result']]
-                    st.session_state.report = st.session_state.orchestrator.generate_final_report(
-                        st.session_state.idea,
-                        st.session_state.plan,
-                        results
-                    )
-                    st.balloons()
-                    st.success("✅ Đã tạo báo cáo! Xem tại tab 'Báo cáo'")
+                if st.session_state.orchestrator and st.session_state.idea and st.session_state.plan:
+                    with st.spinner("📄 Đang tạo báo cáo..."):
+                        results = [state['result'] for state in st.session_state.task_states.values() if state['result']]
+                        st.session_state.report = st.session_state.orchestrator.generate_final_report(
+                            st.session_state.idea,
+                            st.session_state.plan,
+                            results
+                        )
+                        st.balloons()
+                        st.success("✅ Đã tạo báo cáo! Xem tại tab 'Báo cáo'")
     else:
         st.info("ℹ️ Vui lòng tạo kế hoạch ở tab 'Kế hoạch' trước khi thực thi.")
 

@@ -67,8 +67,13 @@ Giúp developers tự động hóa quy trình làm việc với sự hỗ trợ 
    - Xem ý tưởng chi tiết do AI tạo
    - **Quản lý Tags**: Thêm, sửa, xóa các tính năng và công nghệ
    - Tùy chỉnh ý tưởng theo ý muốn → Click "Tạo kế hoạch"
-3. **Tab "Kế hoạch"**: Xem kế hoạch chi tiết → Click "Bắt đầu thực thi"
-4. **Tab "Thực thi"**: Theo dõi quá trình AI thực hiện từng task
+3. **Tab "Kế hoạch"**: Xem kế hoạch chi tiết với các phases và tasks
+4. **Tab "Thực thi"**: 
+   - **Bảng điều khiển tương tác**: Quản lý thực thi từng task riêng lẻ
+   - **Thực thi chọn lọc**: Click "Thực thi" cho từng task bạn muốn chạy
+   - **Ghi chú**: Thêm notes cho mỗi task
+   - **Re-execute**: Thực thi lại tasks không ưng ý
+   - **Theo dõi tiến độ**: Xem trạng thái và kết quả real-time
 5. **Tab "Báo cáo"**: Xem và tải báo cáo tổng kết
 
 ## 🛠️ Công nghệ
@@ -80,7 +85,11 @@ Giúp developers tự động hóa quy trình làm việc với sự hỗ trợ 
 ## ✨ Tính năng nổi bật
 - **Multi-LLM Support**: Hỗ trợ nhiều LLM providers (OpenAI, Anthropic)
 - **Editable Tags**: Quản lý tính năng và công nghệ (thêm, sửa, xóa)
-- **Real-time Progress**: Theo dõi tiến độ từng task
+- **Interactive Execution Dashboard**: Bảng điều khiển tương tác với:
+  - Thực thi từng task riêng lẻ thay vì tự động toàn bộ
+  - Thêm ghi chú cho mỗi task
+  - Re-execute tasks không ưng ý
+  - Theo dõi trạng thái và kết quả real-time
 - **Error Handling**: Xử lý lỗi toàn diện với thông báo tiếng Việt
 - **Export Reports**: Tải báo cáo dưới dạng TXT hoặc JSON
 
@@ -91,5 +100,9 @@ Giúp developers tự động hóa quy trình làm việc với sự hỗ trợ 
 - Kết quả có thể export dưới dạng TXT hoặc JSON
 
 ## 🔄 Phiên bản
+- v1.2.0 - Thêm Interactive Execution Dashboard (October 20, 2025)
+  - Thực thi từng task riêng lẻ
+  - Thêm ghi chú cho tasks
+  - Re-execute tasks
 - v1.1.0 - Thêm tính năng quản lý tags (October 19, 2025)
 - v1.0.0 - Initial release (October 19, 2025)
