@@ -80,6 +80,32 @@ class TaskOrchestrator:
         
         return all_results
     
+    def execute_single_task(self, task: Dict, context: Dict) -> Dict:
+        task_id = task.get("task_id", "unknown")
+        task_name = task.get("name", "Unknown Task")
+        assigned_agent = task.get("assigned_agent", "research")
+        
+        try:
+            agent = self.agents.get(assigned_agent)
+            if agent:
+                result = agent.execute_task(task, context)
+                self.task_results[task_id] = result
+                return result
+            else:
+                return {
+                    "task_id": task_id,
+                    "agent_type": assigned_agent,
+                    "status": "failed",
+                    "result": f"Agent {assigned_agent} không tồn tại"
+                }
+        except Exception as e:
+            return {
+                "task_id": task_id,
+                "agent_type": assigned_agent,
+                "status": "failed",
+                "result": f"Lỗi khi thực hiện task: {str(e)}"
+            }
+    
     def generate_final_report(self, idea: Dict, plan: Dict, results: List[Dict]) -> str:
         doc_agent = self.agents["documentation"]
         

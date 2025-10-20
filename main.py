@@ -260,62 +260,140 @@ with tab3:
         st.info("ℹ️ Vui lòng tạo kế hoạch ở tab 'Ý tưởng' trước.")
 
 with tab4:
-    st.header("⚙️ Thực thi kế hoạch")
+    st.header("⚙️ Bảng điều khiển thực thi")
     
-    if hasattr(st.session_state, 'execute_triggered') and st.session_state.execute_triggered:
-        if not st.session_state.results and st.session_state.llm_client and st.session_state.plan:
-            try:
-                progress_bar = st.progress(0)
-                status_text = st.empty()
-                
-                def update_progress(message, progress):
-                    status_text.markdown(f"**{message}**")
-                    progress_bar.progress(min(progress, 1.0))
-                
-                orchestrator = TaskOrchestrator(st.session_state.llm_client, st.session_state.worker_model)
-                
-                context = {
-                    "idea": st.session_state.idea,
-                    "plan": st.session_state.plan
-                }
-                
-                st.session_state.results = orchestrator.execute_plan(
-                    st.session_state.plan, 
-                    context,
-                    update_progress
-                )
-                
-                status_text.markdown("**✅ Hoàn thành tất cả tasks!**")
-                progress_bar.progress(1.0)
-                
-                if st.session_state.idea and st.session_state.plan and st.session_state.results:
-                    with st.spinner("📄 Đang tạo báo cáo tổng kết..."):
-                        st.session_state.report = orchestrator.generate_final_report(
-                            st.session_state.idea,
-                            st.session_state.plan,
-                            st.session_state.results
-                        )
-                
-                st.success("✅ Đã hoàn thành toàn bộ quy trình!")
-                st.balloons()
-            except ValueError as e:
-                st.error(f"❌ {str(e)}")
-            except Exception as e:
-                st.error(f"❌ Lỗi khi thực thi: {str(e)}")
-    
-    if st.session_state.results:
-        st.subheader("📊 Kết quả thực thi")
+    if st.session_state.plan:
+        if 'task_states' not in st.session_state:
+            st.session_state.task_states = {}
         
-        for i, result in enumerate(st.session_state.results, 1):
-            with st.expander(f"Task {i}: {result.get('task_id', 'unknown')} - Agent: {result.get('agent_type', 'unknown')}", expanded=False):
-                st.markdown(f"**Status:** {result.get('status', 'unknown')}")
-                st.markdown("**Kết quả:**")
-                st.markdown(result.get('result', 'N/A'))
+        if 'orchestrator' not in st.session_state:
+            st.session_state.orchestrator = TaskOrchestrator(st.session_state.llm_client, st.session_state.worker_model) if st.session_state.llm_client else None
+        
+        context = {
+            "idea": st.session_state.idea,
+            "plan": st.session_state.plan
+        }
+        
+        st.markdown("*Bạn có thể thực thi từng task riêng lẻ, thêm ghi chú và thực thi lại nếu cần*")
+        st.divider()
+        
+        all_tasks = []
+        for phase_idx, phase in enumerate(st.session_state.plan.get('phases', [])):
+            st.subheader(f"📦 Phase {phase_idx + 1}: {phase.get('name', 'Unknown')}")
+            st.markdown(f"*{phase.get('description', '')}*")
+            
+            tasks = phase.get('tasks', [])
+            for task_idx, task in enumerate(tasks):
+                task_id = task.get('task_id', f"phase{phase_idx}_task{task_idx}")
+                task_name = task.get('name', 'Unknown Task')
+                task_desc = task.get('description', '')
+                assigned_agent = task.get('assigned_agent', 'research')
+                
+                if task_id not in st.session_state.task_states:
+                    st.session_state.task_states[task_id] = {
+                        'status': 'pending',
+                        'result': None,
+                        'notes': ''
+                    }
+                
+                task_state = st.session_state.task_states[task_id]
+                
+                with st.container():
+                    st.markdown(f"### 🎯 {task_name}")
+                    
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    
+                    with col1:
+                        status_emoji = {
+                            'pending': '⏳ Chờ thực thi',
+                            'running': '⚙️ Đang chạy...',
+                            'completed': '✅ Hoàn thành',
+                            'failed': '❌ Thất bại'
+                        }
+                        st.markdown(f"**Trạng thái:** {status_emoji.get(task_state['status'], 'Unknown')}")
+                        st.markdown(f"**Agent:** `{assigned_agent}`")
+                    
+                    with col2:
+                        if task_state['status'] == 'pending' or task_state['status'] == 'failed':
+                            if st.button(f"▶️ Thực thi", key=f"exec_{task_id}", type="primary"):
+                                st.session_state.task_states[task_id]['status'] = 'running'
+                                st.rerun()
+                    
+                    with col3:
+                        if task_state['status'] == 'completed':
+                            if st.button(f"🔄 Thực thi lại", key=f"reexec_{task_id}"):
+                                st.session_state.task_states[task_id]['status'] = 'running'
+                                st.session_state.task_states[task_id]['result'] = None
+                                st.rerun()
+                    
+                    if task_state['status'] == 'running' and st.session_state.orchestrator:
+                        with st.spinner(f"⚙️ Đang thực thi task: {task_name}..."):
+                            try:
+                                result = st.session_state.orchestrator.execute_single_task(task, context)
+                                st.session_state.task_states[task_id]['status'] = 'completed'
+                                st.session_state.task_states[task_id]['result'] = result
+                                st.success(f"✅ Hoàn thành task: {task_name}")
+                                st.rerun()
+                            except Exception as e:
+                                st.session_state.task_states[task_id]['status'] = 'failed'
+                                st.session_state.task_states[task_id]['result'] = {
+                                    'task_id': task_id,
+                                    'status': 'failed',
+                                    'result': str(e)
+                                }
+                                st.error(f"❌ Lỗi: {str(e)}")
+                    
+                    with st.expander("📝 Mô tả & Chi tiết"):
+                        st.markdown(f"**Mô tả task:** {task_desc}")
+                        if task.get('estimated_duration'):
+                            st.markdown(f"**Thời gian ước tính:** {task['estimated_duration']}")
+                        if task.get('dependencies'):
+                            st.markdown(f"**Phụ thuộc:** {', '.join(task['dependencies'])}")
+                    
+                    if task_state['result']:
+                        with st.expander("📊 Kết quả", expanded=True):
+                            st.markdown(task_state['result'].get('result', 'N/A'))
+                    
+                    notes = st.text_area(
+                        "💭 Ghi chú của bạn",
+                        value=task_state['notes'],
+                        key=f"notes_{task_id}",
+                        placeholder="Thêm ghi chú về task này...",
+                        height=80
+                    )
+                    if notes != task_state['notes']:
+                        st.session_state.task_states[task_id]['notes'] = notes
+                    
+                    st.divider()
+        
+        st.divider()
+        completed_tasks = sum(1 for state in st.session_state.task_states.values() if state['status'] == 'completed')
+        total_tasks = len(st.session_state.task_states)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Tổng số tasks", total_tasks)
+        with col2:
+            st.metric("Đã hoàn thành", completed_tasks)
+        with col3:
+            progress_pct = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+            st.metric("Tiến độ", f"{progress_pct:.0f}%")
+        
+        if completed_tasks == total_tasks and total_tasks > 0:
+            st.success("🎉 Đã hoàn thành tất cả tasks!")
+            
+            if st.button("📄 Tạo báo cáo tổng kết", type="primary"):
+                with st.spinner("📄 Đang tạo báo cáo..."):
+                    results = [state['result'] for state in st.session_state.task_states.values() if state['result']]
+                    st.session_state.report = st.session_state.orchestrator.generate_final_report(
+                        st.session_state.idea,
+                        st.session_state.plan,
+                        results
+                    )
+                    st.balloons()
+                    st.success("✅ Đã tạo báo cáo! Xem tại tab 'Báo cáo'")
     else:
-        if st.session_state.plan:
-            st.info("ℹ️ Nhấn nút 'Bắt đầu thực thi' ở tab 'Kế hoạch' để bắt đầu.")
-        else:
-            st.info("ℹ️ Vui lòng tạo kế hoạch trước khi thực thi.")
+        st.info("ℹ️ Vui lòng tạo kế hoạch ở tab 'Kế hoạch' trước khi thực thi.")
 
 with tab5:
     st.header("📄 Báo cáo tổng kết")
